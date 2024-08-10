@@ -322,10 +322,6 @@ impl TerminalBuilder {
         completion_tx: Sender<()>,
         cx: &mut AppContext,
     ) -> Result<TerminalBuilder> {
-        // TODO: Properly set the current locale,
-        env.entry("LC_ALL".to_string())
-            .or_insert_with(|| "en_US.UTF-8".to_string());
-
         env.insert("ZED_TERM".to_string(), "true".to_string());
         env.insert("TERM_PROGRAM".to_string(), "zed".to_string());
         env.insert(
