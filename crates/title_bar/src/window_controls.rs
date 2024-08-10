@@ -3,9 +3,6 @@ use ui::prelude::*;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 pub enum WindowControlType {
-    Minimize,
-    Restore,
-    Maximize,
     Close,
 }
 
@@ -16,9 +13,6 @@ impl WindowControlType {
     /// icon name based on the platform.
     pub fn icon(&self) -> IconName {
         match self {
-            WindowControlType::Minimize => IconName::GenericMinimize,
-            WindowControlType::Restore => IconName::GenericRestore,
-            WindowControlType::Maximize => IconName::GenericMaximize,
             WindowControlType::Close => IconName::GenericClose,
         }
     }
@@ -82,17 +76,6 @@ pub struct WindowControl {
 }
 
 impl WindowControl {
-    pub fn new(id: impl Into<ElementId>, icon: WindowControlType, cx: &WindowContext) -> Self {
-        let style = WindowControlStyle::default(cx);
-
-        Self {
-            id: id.into(),
-            icon,
-            style,
-            close_action: None,
-        }
-    }
-
     pub fn new_close(
         id: impl Into<ElementId>,
         icon: WindowControlType,
@@ -149,9 +132,6 @@ impl RenderOnce for WindowControl {
             .on_click(move |_, cx| {
                 cx.stop_propagation();
                 match self.icon {
-                    WindowControlType::Minimize => cx.minimize_window(),
-                    WindowControlType::Restore => cx.zoom_window(),
-                    WindowControlType::Maximize => cx.zoom_window(),
                     WindowControlType::Close => cx.dispatch_action(
                         self.close_action
                             .as_ref()

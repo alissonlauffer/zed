@@ -90,11 +90,11 @@ impl Render for TitleBar {
             .h(height)
             .map(|this| {
                 if cx.is_fullscreen() {
-                    this.pl_2()
+                    this.pr_2()
                 } else if self.platform_style == PlatformStyle::Mac {
                     this.pl(px(platform_mac::TRAFFIC_LIGHT_PADDING))
                 } else {
-                    this.pl_2()
+                    this.pr_2()
                 }
             })
             .map(|el| match decorations {
@@ -113,6 +113,40 @@ impl Render for TitleBar {
             })
             .bg(titlebar_color)
             .content_stretch()
+            .when(!cx.is_fullscreen(), |title_bar| match self.platform_style {
+                PlatformStyle::Mac => title_bar,
+                PlatformStyle::Linux => {
+                    if matches!(decorations, Decorations::Client { .. }) {
+                        title_bar
+                            .child(platform_linux::LinuxWindowControls::new(close_action))
+                            .when(supported_controls.window_menu, |titlebar| {
+                                titlebar.on_mouse_down(gpui::MouseButton::Right, move |ev, cx| {
+                                    cx.show_window_menu(ev.position)
+                                })
+                            })
+                            .on_mouse_move(cx.listener(move |this, _ev, cx| {
+                                if this.should_move {
+                                    this.should_move = false;
+                                    cx.start_window_move();
+                                }
+                            }))
+                            .on_mouse_down_out(cx.listener(move |this, _ev, _cx| {
+                                this.should_move = false;
+                            }))
+                            .on_mouse_down(
+                                gpui::MouseButton::Left,
+                                cx.listener(move |this, _ev, _cx| {
+                                    this.should_move = true;
+                                }),
+                            )
+                    } else {
+                        title_bar
+                    }
+                }
+                PlatformStyle::Windows => {
+                    title_bar.child(platform_windows::WindowsWindowControls::new(height))
+                }
+            })
             .child(
                 div()
                     .id("titlebar-content")
@@ -162,40 +196,6 @@ impl Render for TitleBar {
                             }),
                     ),
             )
-            .when(!cx.is_fullscreen(), |title_bar| match self.platform_style {
-                PlatformStyle::Mac => title_bar,
-                PlatformStyle::Linux => {
-                    if matches!(decorations, Decorations::Client { .. }) {
-                        title_bar
-                            .child(platform_linux::LinuxWindowControls::new(close_action))
-                            .when(supported_controls.window_menu, |titlebar| {
-                                titlebar.on_mouse_down(gpui::MouseButton::Right, move |ev, cx| {
-                                    cx.show_window_menu(ev.position)
-                                })
-                            })
-                            .on_mouse_move(cx.listener(move |this, _ev, cx| {
-                                if this.should_move {
-                                    this.should_move = false;
-                                    cx.start_window_move();
-                                }
-                            }))
-                            .on_mouse_down_out(cx.listener(move |this, _ev, _cx| {
-                                this.should_move = false;
-                            }))
-                            .on_mouse_down(
-                                gpui::MouseButton::Left,
-                                cx.listener(move |this, _ev, _cx| {
-                                    this.should_move = true;
-                                }),
-                            )
-                    } else {
-                        title_bar
-                    }
-                }
-                PlatformStyle::Windows => {
-                    title_bar.child(platform_windows::WindowsWindowControls::new(height))
-                }
-            })
     }
 }
 
